@@ -1,0 +1,76 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Transform: AWS::Serverless-2016-10-31
+Description: 'Disabling access for inactive IAM users can reduce the risk of unauthorized
+  access to your AWS resources and help you manage the user-based access more efficiently.
+  Pre-Requistes Assuming that every IAM user has a tag:Email so that email can be
+  sent to indiviual upon inactivity  Disable IAM user profile if user has not logged
+  into AWS console for x number of days, where x is the input provided to the lambda.
+
+  '
+Metadata:
+  AWS::ServerlessRepo::Application:
+    Name: disabling-access-for-inactive-IAM-users
+    Description: Disabling access for inactive IAM user.
+    Author: devops-made-easy
+    SpdxLicenseId: Apache-2.0
+    LicenseUrl: s3://lt-devops-sam-projects/86d3f3a95c324c9479bd8986968f4327
+    ReadmeUrl: s3://lt-devops-sam-projects/240732cb24daa982ae2b363ff397e5b8
+    Labels:
+    - lambda
+    - sam
+    - devops-made-easy
+    - iam
+    - security
+    HomePageUrl: https://github.com/devops-made-easy/inactive-aws-user
+    SemanticVersion: 0.0.1
+    SourceCodeUrl: https://github.com/devops-made-easy/inactive-aws-user
+Parameters:
+  NumberOfDays:
+    Default: 90
+    Type: Number
+    Description: Check if user is inactive for given number of days?
+  WebhookUrl:
+    Default: ''
+    Type: String
+    Description: Provide your Slack Webhook URL?
+Resources:
+  DisableInactiveUsersFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: s3://lt-devops-sam-projects/7bd5d11cdf7cadb5fb24ab3a471681b3
+      Handler: main.lambda_handler
+      Runtime: python3.6
+      Timeout: 30
+      Environment:
+        Variables:
+          NO_OF_DAYS:
+            Ref: NumberOfDays
+          WEBHOOK_URL:
+            Ref: WebhookUrl
+      Policies:
+      - Version: '2012-10-17'
+        Statement:
+        - Effect: Allow
+          Action:
+          - iam:ListUsers
+          - iam:DeleteLoginProfile
+          Resource:
+            Fn::Sub: arn:aws:iam::${AWS::AccountId}:user/*
+      Events:
+        CheckInactiveIAMUsersEvent:
+          Type: Schedule
+          Properties:
+            Schedule: rate(1 day)
+Outputs:
+  DisableInactiveUsersFunction:
+    Description: DisableInactiveUsersFunction ARN
+    Value:
+      Fn::GetAtt:
+      - DisableInactiveUsersFunction
+      - Arn
+  DisableInactiveUsersFunctionIamRole:
+    Description: Implicit IAM Role created for DisableInactiveUsersFunction
+    Value:
+      Fn::GetAtt:
+      - DisableInactiveUsersFunctionRole
+      - Arn

@@ -1,0 +1,65 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Transform: AWS::Serverless-2016-10-31
+Description: >
+  Disabling access for inactive IAM users can reduce the risk of unauthorized access to your AWS resources and help you manage the user-based access more efficiently.
+  Pre-Requistes
+  Assuming that every IAM user has a tag:Email so that email can be sent to indiviual upon inactivity 
+  Disable IAM user profile if user has not logged into AWS console for x number of days, where x is the input provided to the lambda.
+
+Metadata:
+  AWS::ServerlessRepo::Application:
+    Name: disabling-access-for-inactive-IAM-users
+    Description: Disabling access for inactive IAM user.
+    Author: Ajaya Loya
+    SpdxLicenseId: Apache-2.0
+    LicenseUrl: LICENSE
+    ReadmeUrl: README.md
+    Labels: ['lambda', 'sam', 'devops-made-easy', 'iam', 'security', 'leantaas'] 
+    HomePageUrl: https://github.com/devops-made-easy/inactive-aws-user
+    SemanticVersion: 1.0.0
+    SourceCodeUrl: https://github.com/devops-made-easy/inactive-aws-user
+
+Parameters:
+  NumberOfDays:
+    Default: 90
+    Type: Number
+    Description: Check if user is inactive for given number of days?
+  WebhookUrl:
+    Default: ''
+    Type: String
+    Description: Provide your Slack Webhook URL?
+
+Resources:
+  DisableInactiveUsersFunction:
+    Type: AWS::Serverless::Function 
+    Properties:
+      CodeUri: inactive_aws_users/
+      Handler: main.lambda_handler
+      Runtime: python3.6
+      Timeout: 30
+      Environment:
+        Variables:
+          NO_OF_DAYS: !Ref NumberOfDays
+          WEBHOOK_URL: !Ref WebhookUrl
+      Policies:
+        - Version: "2012-10-17"
+          Statement:
+          - Effect: "Allow"
+            Action:
+              - "iam:ListUsers"
+              - "iam:DeleteLoginProfile"
+            Resource:
+              !Sub 'arn:aws:iam::${AWS::AccountId}:user/*'
+      Events:
+        CloudWatchEvent:
+          Type: Schedule
+          Properties:
+            Schedule: rate(1 day)
+
+Outputs:
+  DisableInactiveUsersFunction:
+    Description: "DisableInactiveUsersFunction ARN"
+    Value: !GetAtt DisableInactiveUsersFunction.Arn
+  DisableInactiveUsersFunctionIamRole:
+    Description: "Implicit IAM Role created for DisableInactiveUsersFunction"
+    Value: !GetAtt DisableInactiveUsersFunctionRole.Arn
