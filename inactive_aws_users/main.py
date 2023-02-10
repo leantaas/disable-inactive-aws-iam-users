@@ -17,6 +17,8 @@ def lambda_handler(event, context):
     iam_users = list(filter(lambda user: 'PasswordLastUsed' in user,
                             iam.list_users()['Users']))
 
+    aws_account_id = context.invoked_function_arn.split(":")[4]
+
     inactive_user_list = list(filter(lambda inactive_user: abs((
         today.date() - inactive_user['PasswordLastUsed'].date()).days) > int(num_of_days), iam_users))
 
@@ -36,7 +38,7 @@ def lambda_handler(event, context):
 
     if len(slack_user_list) > 0:
         slack.message("green", "Disabled Inactive IAM Users",
-                      "Below user are not active for " + num_of_days + " days", message, webhook)
+                      "Below user under " + aws_account_id + " are not active for " + num_of_days + " days", message, webhook)
 
     return {
         "statusCode": 200,
