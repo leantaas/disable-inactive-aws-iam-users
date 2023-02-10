@@ -35,7 +35,7 @@ Resources:
     Properties:
       CodeUri: inactive_aws_users/
       Handler: main.lambda_handler
-      Runtime: python3.6
+      Runtime: python3.9
       Timeout: 30
       Environment:
         Variables:
