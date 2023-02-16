@@ -28,6 +28,11 @@ Parameters:
     Default: ''
     Type: String
     Description: Provide your Slack Webhook URL?
+  DeleteAccessKeys:
+    Default: ''
+    Type: String
+    Description: Delete all access keys for inactive users too
+    AllowedValues: ['', 'true']
 
 Resources:
   DisableInactiveUsersFunction:
@@ -41,6 +46,7 @@ Resources:
         Variables:
           NO_OF_DAYS: !Ref NumberOfDays
           WEBHOOK_URL: !Ref WebhookUrl
+          DELETE_ACCESS_KEYS: !Ref DeleteAccessKeys
       Policies:
         - Version: "2012-10-17"
           Statement:
